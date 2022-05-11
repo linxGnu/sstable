@@ -38,7 +38,7 @@ impl Footer {
     pub fn new(metaix: BlockHandle, index: BlockHandle) -> Footer {
         Footer {
             meta_index: metaix,
-            index: index,
+            index,
         }
     }
 
@@ -60,12 +60,12 @@ impl Footer {
         let s1 = self.meta_index.encode_to(to);
         let s2 = self.index.encode_to(&mut to[s1..]);
 
-        for i in s1 + s2..FOOTER_LENGTH {
+        (s1 + s2..FOOTER_LENGTH).for_each(|i| {
             to[i] = 0;
-        }
-        for i in FOOTER_LENGTH..FULL_FOOTER_LENGTH {
+        });
+        (FOOTER_LENGTH..FULL_FOOTER_LENGTH).for_each(|i| {
             to[i] = MAGIC_FOOTER_ENCODED[i - FOOTER_LENGTH];
-        }
+        });
     }
 }
 
@@ -107,7 +107,7 @@ impl<Dst: Write> TableBuilder<Dst> {
     pub fn new(opt: Options, dst: Dst) -> TableBuilder<Dst> {
         TableBuilder {
             opt: opt.clone(),
-            dst: dst,
+            dst,
             offset: 0,
             prev_block_last_key: vec![],
             num_entries: 0,
@@ -176,14 +176,14 @@ impl<Dst: Write> TableBuilder<Dst> {
         assert!(self.data_block.is_some());
 
         let block = self.data_block.take().unwrap();
-        let sep = self.opt.cmp.find_shortest_sep(&block.last_key(), next_key);
+        let sep = self.opt.cmp.find_shortest_sep(block.last_key(), next_key);
         self.prev_block_last_key = Vec::from(block.last_key());
         let contents = block.finish();
 
         let ctype = self.opt.compression_type;
         let handle = self.write_block(contents, ctype)?;
 
-        let mut handle_enc = [0 as u8; 16];
+        let mut handle_enc = [0_u8; 16];
         let enc_len = handle.encode_to(&mut handle_enc);
 
         self.index_block
@@ -212,8 +212,9 @@ impl<Dst: Write> TableBuilder<Dst> {
         digest.write(&data);
         digest.write(&[ctype as u8; TABLE_BLOCK_COMPRESS_LEN]);
 
-        self.dst.write(&data)?;
-        self.dst.write(&[ctype as u8; TABLE_BLOCK_COMPRESS_LEN])?;
+        self.dst.write_all(&data)?;
+        self.dst
+            .write_all(&[ctype as u8; TABLE_BLOCK_COMPRESS_LEN])?;
         self.dst.write_fixedint(mask_crc(digest.sum32()))?;
 
         let handle = BlockHandle::new(self.offset, data.len());
@@ -246,7 +247,7 @@ impl<Dst: Write> TableBuilder<Dst> {
             let fblock_data = fblock.finish();
             let fblock_handle = self.write_block(fblock_data, CompressionType::CompressionNone)?;
 
-            let mut handle_enc = [0 as u8; 16];
+            let mut handle_enc = [0_u8; 16];
             let enc_len = fblock_handle.encode_to(&mut handle_enc);
 
             meta_ix_block.add(filter_key.as_bytes(), &handle_enc[0..enc_len]);
@@ -311,9 +312,8 @@ mod tests {
         ];
 
         for i in 0..data.len() {
-            b.add(&data[i].0.as_bytes(), &data[i].1.as_bytes()).unwrap();
-            b.add(&data2[i].0.as_bytes(), &data2[i].1.as_bytes())
-                .unwrap();
+            b.add(data[i].0.as_bytes(), data[i].1.as_bytes()).unwrap();
+            b.add(data2[i].0.as_bytes(), data2[i].1.as_bytes()).unwrap();
         }
 
         let estimate = b.size_estimate();

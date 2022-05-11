@@ -2,8 +2,8 @@
 #[macro_use]
 extern crate time_test;
 
-mod block;
-mod block_builder;
+pub mod block;
+pub mod block_builder;
 mod blockhandle;
 mod cache;
 pub mod error;

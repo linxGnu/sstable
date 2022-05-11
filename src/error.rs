@@ -45,7 +45,7 @@ impl Default for Status {
 
 impl Display for Status {
     fn fmt(&self, fmt: &mut Formatter) -> result::Result<(), fmt::Error> {
-        fmt.write_str(&self.to_string())
+        fmt.write_str(&ToString::to_string(&self))
     }
 }
 
@@ -57,16 +57,12 @@ impl Error for Status {
 
 impl Status {
     pub fn new(code: StatusCode, msg: &str) -> Status {
-        let err;
-        if msg.is_empty() {
-            err = format!("{:?}", code)
+        let err = if msg.is_empty() {
+            format!("{:?}", code)
         } else {
-            err = format!("{:?}: {}", code, msg);
-        }
-        return Status {
-            code: code,
-            err: err,
+            format!("{:?}: {}", code, msg)
         };
+        Status { code, err }
     }
 }
 

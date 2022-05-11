@@ -61,7 +61,7 @@ impl Cmp for DefaultCmp {
         sep.extend_from_slice(a);
         // Append a 0 byte; by making it longer than a, it will compare greater to it.
         sep.extend_from_slice(&[0]);
-        return sep;
+        sep
     }
 
     fn find_short_succ(&self, a: &[u8]) -> Vec<u8> {
@@ -75,7 +75,7 @@ impl Cmp for DefaultCmp {
         }
         // Rare path
         result.push(255);
-        return result;
+        result
     }
 }
 

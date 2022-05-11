@@ -137,19 +137,18 @@ impl Table {
             return location.offset();
         }
 
-        return self.footer.meta_index.offset();
+        self.footer.meta_index.offset()
     }
 
     /// Returns an iterator over an SSTable. Iterators hold internal references to the table, so
     /// make sure to let them expire when not needed anymore.
     pub fn iter(&self) -> TableIterator {
-        let iter = TableIterator {
+        TableIterator {
             current_block: None,
             current_block_off: 0,
             index_block: self.index_block.iter(),
             table: self.clone(),
-        };
-        iter
+        }
     }
 
     /// Retrieve an entry for a key from the table. This function uses the attached filters, so
@@ -459,7 +458,6 @@ mod tests {
         assert_eq!(opt.block_cache.read().expect(LOCK_POISONED).count(), 1);
         iter.next();
         assert_eq!(opt.block_cache.read().expect(LOCK_POISONED).count(), 1);
-
     }
 
     #[test]
