@@ -11,8 +11,6 @@ use std::cmp::Ordering;
 use std::io::Write;
 use std::sync::Arc;
 
-use crc::crc32;
-use crc::Hasher32;
 use integer_encoding::FixedIntWriter;
 use snap::Encoder;
 
@@ -22,6 +20,8 @@ const MAGIC_FOOTER_ENCODED: [u8; 8] = [0x57, 0xfb, 0x80, 0x8b, 0x24, 0x75, 0x47,
 
 pub const TABLE_BLOCK_COMPRESS_LEN: usize = 1;
 pub const TABLE_BLOCK_CKSUM_LEN: usize = 4;
+
+pub const CASTAGNOLI: crc::Crc<u32> = crc::Crc::<u32>::new(&crc::CRC_32_ISCSI);
 
 /// Footer is a helper for encoding/decoding a table footer.
 #[derive(Debug, Clone)]
@@ -207,15 +207,14 @@ impl<Dst: Write> TableBuilder<Dst> {
             data = encoder.compress_vec(&data)?;
         }
 
-        let mut digest = crc32::Digest::new(crc32::CASTAGNOLI);
-
-        digest.write(&data);
-        digest.write(&[ctype as u8; TABLE_BLOCK_COMPRESS_LEN]);
+        let mut digest = CASTAGNOLI.digest();
+        digest.update(&data);
+        digest.update(&[ctype as u8; TABLE_BLOCK_COMPRESS_LEN]);
 
         self.dst.write_all(&data)?;
         self.dst
             .write_all(&[ctype as u8; TABLE_BLOCK_COMPRESS_LEN])?;
-        self.dst.write_fixedint(mask_crc(digest.sum32()))?;
+        self.dst.write_fixedint(mask_crc(digest.finalize()))?;
 
         let handle = BlockHandle::new(self.offset, data.len());
         self.offset += data.len() + TABLE_BLOCK_COMPRESS_LEN + TABLE_BLOCK_CKSUM_LEN;

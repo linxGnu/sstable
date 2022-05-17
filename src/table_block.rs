@@ -7,7 +7,6 @@ use crate::options::{self, CompressionType, Options};
 use crate::table_builder;
 use crate::types::{unmask_crc, RandomAccess};
 
-use crc::crc32::{self, Hasher32};
 use integer_encoding::FixedInt;
 use snap::Decoder;
 
@@ -82,8 +81,8 @@ pub fn read_table_block(
 
 /// Verify checksum of block
 fn verify_table_block(data: &[u8], compression: u8, want: u32) -> bool {
-    let mut digest = crc32::Digest::new(crc32::CASTAGNOLI);
-    digest.write(data);
-    digest.write(&[compression; 1]);
-    digest.sum32() == want
+    let mut digest = super::table_builder::CASTAGNOLI.digest();
+    digest.update(data);
+    digest.update(&[compression; 1]);
+    digest.finalize() == want
 }
