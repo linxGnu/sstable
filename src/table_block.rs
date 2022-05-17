@@ -84,9 +84,5 @@ fn verify_table_block(data: &[u8], compression: u8, want: u32) -> bool {
     let mut digest = super::table_builder::CASTAGNOLI.digest();
     digest.update(data);
     digest.update(&[compression; 1]);
-
-    let x = digest.finalize();
-    println!("expect {:?} {} {}", data, compression, x);
-
-    x == want
+    digest.finalize() == want
 }
