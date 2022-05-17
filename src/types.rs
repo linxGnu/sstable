@@ -155,12 +155,14 @@ impl Iterator for dyn SSIterator {
 const MASK_DELTA: u32 = 0xa282ead8;
 
 pub fn mask_crc(c: u32) -> u32 {
-    (c.wrapping_shr(15) | c.wrapping_shl(17)).wrapping_add(MASK_DELTA)
+    c
+    // (c.wrapping_shr(15) | c.wrapping_shl(17)).wrapping_add(MASK_DELTA)
 }
 
 pub fn unmask_crc(mc: u32) -> u32 {
-    let rot = mc.wrapping_sub(MASK_DELTA);
-    rot.wrapping_shr(17) | rot.wrapping_shl(15)
+    mc
+    // let rot = mc.wrapping_sub(MASK_DELTA);
+    // rot.wrapping_shr(17) | rot.wrapping_shl(15)
 }
 
 #[cfg(test)]
